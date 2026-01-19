@@ -143,6 +143,37 @@ export interface Grade {
   schoolId: string;
   name: string;
   level?: number;
+  studentCount?: number;
+}
+
+/**
+ * Equipment item within a class equipment list
+ */
+export interface EquipmentItem {
+  id: string;
+  name: string;
+  description?: string;
+  count: number;
+  category?: string;
+}
+
+/**
+ * Equipment list for a class
+ */
+export interface ClassEquipmentList {
+  id: string;
+  classId: string;
+  schoolId: string;
+  items: EquipmentItem[];
+  lastUpdated?: string;
+  updatedBy?: string;
+}
+
+/**
+ * Payload for updating equipment list
+ */
+export interface EquipmentListUpdatePayload {
+  items: Omit<EquipmentItem, 'id'>[];
 }
 
 // =============================================================================
