@@ -36,14 +36,6 @@ const navItems: NavItem[] = [
   },
 ];
 
-const othersItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Example Template",
-    path: "/example",
-  },
-];
-
 const CustomSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
@@ -117,49 +109,6 @@ const CustomSidebar: React.FC = () => {
               </h2>
               <ul className="flex flex-col gap-4">
                 {navItems.map((nav) => (
-                  <li key={nav.name}>
-                    {nav.path && (
-                      <Link
-                        href={nav.path}
-                        className={`menu-item group ${
-                          isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                        }`}
-                      >
-                        <span
-                          className={`${
-                            isActive(nav.path)
-                              ? "menu-item-icon-active"
-                              : "menu-item-icon-inactive"
-                          }`}
-                        >
-                          {nav.icon}
-                        </span>
-                        {(isExpanded || isHovered || isMobileOpen) && (
-                          <span className="menu-item-text">{nav.name}</span>
-                        )}
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              <ul className="flex flex-col gap-4">
-                {othersItems.map((nav) => (
                   <li key={nav.name}>
                     {nav.path && (
                       <Link
