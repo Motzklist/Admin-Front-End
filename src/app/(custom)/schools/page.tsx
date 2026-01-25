@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Breadcrumb from "@/components/common/Breadcrumb";
+import CsvUploadModal from "@/components/common/CsvUploadModal";
+import Button from "@/components/ui/button/Button";
 import Link from "next/link";
 import * as api from "@/services/api";
 import type { School } from "@/types/api";
@@ -16,20 +18,23 @@ import {
 export default function SchoolsPage() {
   const [schools, setSchools] = useState<School[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const loadSchools = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await api.getSchools();
+      setSchools(data);
+    } catch (error) {
+      console.error("Failed to load schools:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadSchools() {
-      try {
-        const data = await api.getSchools();
-        setSchools(data);
-      } catch (error) {
-        console.error("Failed to load schools:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
     loadSchools();
-  }, []);
+  }, [loadSchools]);
 
   return (
     <>
@@ -37,12 +42,37 @@ export default function SchoolsPage() {
 
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            All Schools
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Select a school to manage its classes and equipment lists.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                All Schools
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Select a school to manage its classes and equipment lists.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setIsUploadModalOpen(true)}
+              startIcon={
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+              }
+            >
+              Upload CSV
+            </Button>
+          </div>
         </div>
 
         <div className="p-6">
@@ -182,6 +212,12 @@ export default function SchoolsPage() {
           )}
         </div>
       </div>
+
+      <CsvUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUploadComplete={loadSchools}
+      />
     </>
   );
 }
