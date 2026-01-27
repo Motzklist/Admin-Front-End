@@ -2,8 +2,9 @@ import SignUpForm from "@/components/auth/SignUpForm";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign Up | Motzklist Admin",
-  description: "Sign up for the Motzklist Admin Panel",
+  title: "Next.js SignUp Page | TailAdmin - Next.js Dashboard Template",
+  description: "This is Next.js SignUp Page TailAdmin Dashboard Template",
+  // other metadata
 };
 
 export default function SignUp() {
