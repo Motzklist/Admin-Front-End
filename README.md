@@ -29,8 +29,7 @@ SESSION_SECRET=your-secret-here      # Session secret
 
 ## Documentation
 
-- [Architecture](./docs/ARCHITECTURE.md) - System architecture and security model
-- [Development Guide](./docs/DEVELOPMENT.md) - Setup, API usage, and backend requirements
+- [Docker Guide](./docs/docker.md) - Docker development and production setup
 
 ## Project Structure
 
