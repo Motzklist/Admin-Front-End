@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import Button from "@/components/ui/button/Button";
@@ -9,7 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import * as api from "@/services/api";
-import type { School } from "@/types/api";
+import type { ParentUser } from "@/types/api";
 import {
   Table,
   TableBody,
@@ -18,71 +17,79 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export default function SchoolsPage() {
-  const [schools, setSchools] = useState<School[]>([]);
+export default function UsersPage() {
+  const [users, setUsers] = useState<ParentUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Create/edit modal state. `editing` null = creating a new school.
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editing, setEditing] = useState<School | null>(null);
-  const [nameInput, setNameInput] = useState("");
+  const [editing, setEditing] = useState<ParentUser | null>(null);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Delete confirmation state.
-  const [deleteTarget, setDeleteTarget] = useState<School | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ParentUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadSchools = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      setSchools(await api.getSchools());
+      setUsers(await api.getParents());
     } catch (err) {
-      console.error("Failed to load schools:", err);
-      setError("Could not load schools. Please try again.");
+      console.error("Failed to load users:", err);
+      setError("Could not load users. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadSchools();
-  }, [loadSchools]);
+    load();
+  }, [load]);
 
   const openCreate = () => {
     setEditing(null);
-    setNameInput("");
+    setUsernameInput("");
+    setPasswordInput("");
     setFormError(null);
     setIsFormOpen(true);
   };
 
-  const openEdit = (school: School) => {
-    setEditing(school);
-    setNameInput(school.name);
+  const openEdit = (parent: ParentUser) => {
+    setEditing(parent);
+    setUsernameInput(parent.username);
+    setPasswordInput("");
     setFormError(null);
     setIsFormOpen(true);
   };
 
   const handleSave = async () => {
-    const name = nameInput.trim();
-    if (!name) {
-      setFormError("School name is required.");
+    const username = usernameInput.trim();
+    if (!username) {
+      setFormError("Username is required.");
+      return;
+    }
+    if (!editing && !passwordInput) {
+      setFormError("Password is required for a new user.");
       return;
     }
     try {
       setIsSaving(true);
       setFormError(null);
       if (editing) {
-        await api.updateSchool(editing.id, { name });
+        await api.updateParent(editing.id, {
+          username,
+          password: passwordInput ? passwordInput : undefined,
+        });
       } else {
-        await api.createSchool({ name });
+        await api.createParent({ username, password: passwordInput });
       }
       setIsFormOpen(false);
-      await loadSchools();
+      await load();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Could not save the school.");
+      setFormError(err instanceof Error ? err.message : "Could not save the user.");
     } finally {
       setIsSaving(false);
     }
@@ -92,12 +99,12 @@ export default function SchoolsPage() {
     if (!deleteTarget) return;
     try {
       setIsDeleting(true);
-      await api.deleteSchool(deleteTarget.id);
+      await api.deleteParent(deleteTarget.id);
       setDeleteTarget(null);
-      await loadSchools();
+      await load();
     } catch (err) {
-      console.error("Failed to delete school:", err);
-      setError(err instanceof Error ? err.message : "Could not delete the school.");
+      console.error("Failed to delete user:", err);
+      setError(err instanceof Error ? err.message : "Could not delete the user.");
       setDeleteTarget(null);
     } finally {
       setIsDeleting(false);
@@ -106,27 +113,19 @@ export default function SchoolsPage() {
 
   return (
     <>
-      <Breadcrumb pageTitle="Schools" />
+      <Breadcrumb pageTitle="Users" />
 
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-6 py-5 dark:border-gray-800">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">All Schools</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Parent accounts</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Manage schools and drill into each one&apos;s grades and equipment lists.
+              Manage the parent accounts that can sign in to the storefront.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/import"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]"
-            >
-              Import CSV
-            </Link>
-            <Button size="sm" onClick={openCreate}>
-              Add School
-            </Button>
-          </div>
+          <Button size="sm" onClick={openCreate}>
+            Add User
+          </Button>
         </div>
 
         <div className="p-6">
@@ -139,17 +138,15 @@ export default function SchoolsPage() {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-brand-500" />
-              <span className="ml-3 text-gray-500">Loading schools…</span>
+              <span className="ml-3 text-gray-500">Loading users…</span>
             </div>
-          ) : schools.length === 0 ? (
+          ) : users.length === 0 ? (
             <div className="py-12 text-center">
-              <h3 className="text-lg font-medium text-gray-800 dark:text-white/90">No schools yet</h3>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Add your first school or import a CSV to get started.
-              </p>
+              <h3 className="text-lg font-medium text-gray-800 dark:text-white/90">No users yet</h3>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Create the first parent account.</p>
               <div className="mt-4">
                 <Button size="sm" onClick={openCreate}>
-                  Add School
+                  Add User
                 </Button>
               </div>
             </div>
@@ -159,7 +156,7 @@ export default function SchoolsPage() {
                 <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                   <TableRow>
                     <TableCell isHeader className="px-5 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">
-                      School Name
+                      Username
                     </TableCell>
                     <TableCell isHeader className="px-5 py-3 text-end text-sm font-medium text-gray-500 dark:text-gray-400">
                       Actions
@@ -167,39 +164,28 @@ export default function SchoolsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {schools.map((school) => (
-                    <TableRow key={school.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                  {users.map((parent) => (
+                    <TableRow key={parent.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.02]">
                       <TableCell className="px-5 py-4 text-start">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-500/10">
-                            <svg className="h-5 w-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-500 dark:bg-brand-500/10">
+                            {parent.username.slice(0, 2).toUpperCase()}
                           </div>
-                          <span className="font-medium text-gray-800 dark:text-white/90">{school.name}</span>
+                          <span className="font-medium text-gray-800 dark:text-white/90">{parent.username}</span>
                         </div>
                       </TableCell>
                       <TableCell className="px-5 py-4 text-end">
                         <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/schools/${school.id}/grades`}
-                            className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-3 py-2 text-sm font-medium text-brand-500 transition hover:bg-brand-100 dark:bg-brand-500/10 dark:hover:bg-brand-500/20"
-                          >
-                            Manage grades
-                          </Link>
                           <button
                             type="button"
-                            onClick={() => openEdit(school)}
-                            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-brand-500 dark:hover:bg-gray-800"
-                            title="Edit"
+                            onClick={() => openEdit(parent)}
+                            className="rounded-lg px-3 py-2 text-sm font-medium text-brand-500 transition hover:bg-brand-50 dark:hover:bg-brand-500/10"
                           >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                            Edit / reset password
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDeleteTarget(school)}
+                            onClick={() => setDeleteTarget(parent)}
                             className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-error-500 dark:hover:bg-gray-800"
                             title="Delete"
                           >
@@ -218,33 +204,41 @@ export default function SchoolsPage() {
         </div>
       </div>
 
-      {/* Create / edit modal */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} className="max-w-[480px] p-6 lg:p-8">
         <div className="space-y-6">
           <div>
             <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              {editing ? "Edit school" : "Add school"}
+              {editing ? "Edit user" : "Add user"}
             </h4>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {editing ? "Update the school name." : "Create a new school."}
+              {editing
+                ? "Rename the account or set a new password. Leave the password blank to keep it."
+                : "Create a new parent account."}
             </p>
           </div>
-          <div>
-            <Label>School name</Label>
-            <Input
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder="e.g. Ben Gurion"
-              error={Boolean(formError)}
-              hint={formError ?? undefined}
-            />
+          <div className="space-y-4">
+            <div>
+              <Label>Username</Label>
+              <Input value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} placeholder="e.g. cohen_family" />
+            </div>
+            <div>
+              <Label>{editing ? "New password (optional)" : "Password"}</Label>
+              <Input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder={editing ? "Leave blank to keep current" : "Set a password"}
+                error={Boolean(formError)}
+                hint={formError ?? undefined}
+              />
+            </div>
           </div>
           <div className="flex items-center justify-end gap-3">
             <Button variant="outline" size="sm" onClick={() => setIsFormOpen(false)} disabled={isSaving}>
               Cancel
             </Button>
             <Button size="sm" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? "Saving…" : editing ? "Save changes" : "Create school"}
+              {isSaving ? "Saving…" : editing ? "Save changes" : "Create user"}
             </Button>
           </div>
         </div>
@@ -252,14 +246,14 @@ export default function SchoolsPage() {
 
       <ConfirmDialog
         isOpen={Boolean(deleteTarget)}
-        title="Delete school"
+        title="Delete user"
         message={
           <>
-            Delete <span className="font-medium text-gray-700 dark:text-gray-300">{deleteTarget?.name}</span>?
-            This also removes its grades, equipment lists and order history. This cannot be undone.
+            Delete <span className="font-medium text-gray-700 dark:text-gray-300">{deleteTarget?.username}</span>?
+            Their cart and order history are removed too. This cannot be undone.
           </>
         }
-        confirmLabel="Delete school"
+        confirmLabel="Delete user"
         destructive
         isBusy={isDeleting}
         onConfirm={handleDelete}
