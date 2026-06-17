@@ -144,6 +144,55 @@ export interface AnalyticsSummary {
 }
 
 // =============================================================================
+// Payments (Stripe)
+// =============================================================================
+
+/** A Stripe charge as shown in the admin payments view. Amounts are in major units (₪). */
+export interface StripePayment {
+  id: string;
+  paymentIntent?: string;
+  amount: number;
+  amountRefunded: number;
+  currency: string;
+  /** Stripe charge status, e.g. "succeeded", "pending", "failed". */
+  status: string;
+  refunded: boolean;
+  email?: string;
+  description?: string;
+  receiptUrl?: string;
+  /** ISO timestamp. */
+  created: string;
+  /** Deep link to this payment in the Stripe Dashboard. */
+  dashboardUrl?: string;
+}
+
+/**
+ * Payments listing. `configured` is false when the backend has no Stripe key yet,
+ * so the UI can show a "connect Stripe" state instead of an error.
+ */
+export interface PaymentsResponse {
+  configured: boolean;
+  payments: StripePayment[];
+}
+
+export interface StripeBalanceItem {
+  amount: number;
+  currency: string;
+}
+
+export interface BalanceResponse {
+  configured: boolean;
+  available: StripeBalanceItem[];
+  pending: StripeBalanceItem[];
+}
+
+export interface RefundResult {
+  id: string;
+  status: string;
+  amount: number;
+}
+
+// =============================================================================
 // CSV import
 // =============================================================================
 

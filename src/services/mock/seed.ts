@@ -55,6 +55,21 @@ export interface CartRecord {
   userId: string;
   gradeId: string;
 }
+/** A Stripe-charge-shaped record, used to demo the Payments view in mock mode. */
+export interface PaymentRecord {
+  id: string;
+  paymentIntent: string;
+  amount: number;
+  amountRefunded: number;
+  currency: string;
+  status: string;
+  refunded: boolean;
+  email: string;
+  description: string;
+  receiptUrl: string;
+  created: string;
+  dashboardUrl: string;
+}
 
 export interface MockDb {
   schools: SchoolRecord[];
@@ -64,6 +79,7 @@ export interface MockDb {
   parents: ParentRecord[];
   orders: OrderRecord[];
   carts: CartRecord[];
+  payments: PaymentRecord[];
 }
 
 /** Grade id scheme used by the backend: `sid * 10 + (gradeNumber - 8)`. */
@@ -216,5 +232,29 @@ export function createSeed(): MockDb {
     { userId: '2', gradeId: gradeId('2', 12) },
   ];
 
-  return { schools, grades, equipment, requirements, parents, orders, carts };
+  // Stripe-charge-shaped demo data, loosely mirroring the orders above so the
+  // Payments view is meaningful in mock mode. One refund is pre-applied.
+  const orderTotal = (o: OrderRecord) =>
+    o.items.reduce((sum, it) => sum + it.quantity * it.priceAtPurchase, 0);
+  const payments: PaymentRecord[] = orders.map((o) => {
+    const parent = parents.find((p) => p.id === o.userId);
+    const total = orderTotal(o);
+    const refunded = o.id === '2'; // demo a refunded payment
+    return {
+      id: `ch_mock_${o.id}`,
+      paymentIntent: `pi_mock_${o.id}`,
+      amount: total,
+      amountRefunded: refunded ? total : 0,
+      currency: 'ils',
+      status: 'succeeded',
+      refunded,
+      email: `${parent?.username ?? `user${o.userId}`}@example.com`,
+      description: `Motzklist order #${o.id}`,
+      receiptUrl: `https://pay.stripe.com/receipts/mock_${o.id}`,
+      created: o.purchaseDate,
+      dashboardUrl: `https://dashboard.stripe.com/test/payments/pi_mock_${o.id}`,
+    };
+  });
+
+  return { schools, grades, equipment, requirements, parents, orders, carts, payments };
 }

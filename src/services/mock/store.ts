@@ -11,6 +11,7 @@
 
 import type {
   AnalyticsSummary,
+  BalanceResponse,
   Equipment,
   Grade,
   GradeRequirements,
@@ -20,6 +21,8 @@ import type {
   Order,
   OrderFilters,
   ParentUser,
+  PaymentsResponse,
+  RefundResult,
   RequirementItem,
   School,
 } from '@/types/api';
@@ -481,6 +484,38 @@ class MockStore {
       topEquipment,
       spendBySchool,
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Payments (Stripe) — mock-mode stand-ins
+  // ---------------------------------------------------------------------------
+
+  listPayments(): Promise<PaymentsResponse> {
+    return delay({
+      configured: true,
+      payments: this.db.payments.map((p) => ({ ...p })),
+    });
+  }
+
+  stripeBalance(): Promise<BalanceResponse> {
+    const available = this.db.payments
+      .filter((p) => !p.refunded)
+      .reduce((sum, p) => sum + (p.amount - p.amountRefunded), 0);
+    return delay({
+      configured: true,
+      available: [{ amount: Number(available.toFixed(2)), currency: 'ils' }],
+      pending: [{ amount: 0, currency: 'ils' }],
+    });
+  }
+
+  refundPayment(id: string): Promise<RefundResult> {
+    const payment = this.db.payments.find((p) => p.id === id);
+    if (!payment) throw new NotFoundError(`Payment ${id} not found`);
+    if (payment.refunded) throw new ValidationError('Payment is already refunded');
+    payment.refunded = true;
+    payment.amountRefunded = payment.amount;
+    payment.status = 'refunded';
+    return delay({ id: `re_mock_${id}`, status: 'succeeded', amount: payment.amount });
   }
 
   // ---------------------------------------------------------------------------

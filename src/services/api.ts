@@ -21,6 +21,7 @@
 import type {
   AnalyticsSummary,
   AuthStatusResponse,
+  BalanceResponse,
   Equipment,
   EquipmentPayload,
   Grade,
@@ -34,6 +35,8 @@ import type {
   ParentUser,
   ParentUserPayload,
   ParentUserUpdatePayload,
+  PaymentsResponse,
+  RefundResult,
   RequirementsUpdatePayload,
   School,
   SchoolPayload,
@@ -348,6 +351,29 @@ export async function getOrderById(id: string): Promise<Order | null> {
 
 export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
   return withFallback(() => apiFetch<AnalyticsSummary>('/analytics/summary'), () => mockStore.analyticsSummary());
+}
+
+// =============================================================================
+// Payments (Stripe)
+// =============================================================================
+//
+// Money data never silently falls back to mock in live mode — a backend/Stripe
+// error surfaces to the caller rather than showing fake figures. Mock data is
+// used only when the whole app is in mock mode.
+
+export async function getPayments(): Promise<PaymentsResponse> {
+  if (USE_MOCKS) return mockStore.listPayments();
+  return apiFetch<PaymentsResponse>('/payments');
+}
+
+export async function getStripeBalance(): Promise<BalanceResponse> {
+  if (USE_MOCKS) return mockStore.stripeBalance();
+  return apiFetch<BalanceResponse>('/payments/balance');
+}
+
+export async function refundPayment(id: string): Promise<RefundResult> {
+  if (USE_MOCKS) return mockStore.refundPayment(id);
+  return apiFetch<RefundResult>(`/payments/${id}/refund`, { method: 'POST' });
 }
 
 // =============================================================================

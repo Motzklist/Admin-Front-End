@@ -16,6 +16,24 @@ export function formatCurrency(amount: number): string {
   return ilsFormatter.format(Number.isFinite(amount) ? amount : 0);
 }
 
+/**
+ * Format an amount in an arbitrary ISO currency (e.g. Stripe balances, which
+ * may be in USD). Falls back to the ILS formatter for unknown/invalid codes.
+ */
+export function formatMoney(amount: number, currency: string): string {
+  const value = Number.isFinite(amount) ? amount : 0;
+  try {
+    return new Intl.NumberFormat("he-IL", {
+      style: "currency",
+      currency: (currency || "ILS").toUpperCase(),
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return formatCurrency(value);
+  }
+}
+
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",
   month: "short",
