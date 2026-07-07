@@ -6,7 +6,7 @@ import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/ui/button/Button";
 
 // Inlined at build time; reflects whether the app is talking to the live backend.
-const USING_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== "false";
+const USING_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();

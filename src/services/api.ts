@@ -6,12 +6,13 @@
  * real backend (proxied by the Next.js `/api/*` routes) and the in-memory
  * {@link mockStore}:
  *
- * - `NEXT_PUBLIC_USE_MOCKS` unset or `"true"` (default): everything is served by
- *   the mock store, so the admin panel is fully functional with no backend.
- * - `NEXT_PUBLIC_USE_MOCKS="false"`: real calls are made; if the backend is
- *   unreachable or hasn't implemented an endpoint yet (network error / 5xx /
- *   501), that one call transparently falls back to the mock. Real 4xx errors
- *   (validation, auth, not-found) surface to the caller.
+ * - `NEXT_PUBLIC_USE_MOCKS` unset or any value other than `"true"` (default):
+ *   real calls are made; if the backend is unreachable or hasn't implemented an
+ *   endpoint yet (network error / 5xx / 501), that one call transparently falls
+ *   back to the mock. Real 4xx errors (validation, auth, not-found) surface to
+ *   the caller.
+ * - `NEXT_PUBLIC_USE_MOCKS="true"`: everything is served by the mock store, so
+ *   the admin panel is fully functional with no backend.
  *
  * Flip the whole app from mock to live by changing that one variable.
  *
@@ -46,8 +47,9 @@ import { mockStore } from './mock/store';
 /** Base URL for the Next.js API routes (same-origin by default). */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-/** When true (the default), all data comes from the in-memory mock store. */
-const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== 'false';
+/** When true, all data comes from the in-memory mock store. Off by default;
+ *  opt in with NEXT_PUBLIC_USE_MOCKS="true". */
+const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
 
 /** Custom error carrying the HTTP status of a failed API call. */
 export class ApiRequestError extends Error {
