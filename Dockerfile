@@ -82,11 +82,17 @@ ARG NEXT_PUBLIC_API_URL
 # Mocks are OFF by default; pass --build-arg NEXT_PUBLIC_USE_MOCKS=true to opt in.
 ARG NEXT_PUBLIC_USE_MOCKS=false
 ARG SESSION_SECRET
+# Authentication provider (build-time; NEXT_PUBLIC_* is inlined into the bundle).
+# 'api' = username/password (default), 'google'/'microsoft' = third-party OAuth.
+# See src/services/auth/. The redirect uses GOOGLE_CLIENT_ID (admin server env)
+# and the backend's GOOGLE_CLIENT_SECRET, both supplied at runtime.
+ARG NEXT_PUBLIC_AUTH_PROVIDER=api
 
 ENV API_URL=$API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_USE_MOCKS=$NEXT_PUBLIC_USE_MOCKS
 ENV SESSION_SECRET=$SESSION_SECRET
+ENV NEXT_PUBLIC_AUTH_PROVIDER=$NEXT_PUBLIC_AUTH_PROVIDER
 
 # Build the Next.js application
 RUN npm run build

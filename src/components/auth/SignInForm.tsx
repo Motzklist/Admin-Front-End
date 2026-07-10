@@ -9,6 +9,12 @@ import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
+// Human-readable labels for redirect (third-party) providers.
+const PROVIDER_LABELS: Record<string, string> = {
+  google: "Google",
+  microsoft: "Microsoft",
+};
+
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
@@ -17,8 +23,11 @@ export default function SignInForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, loginWithProvider, authMethod, providerName } = useAuth();
   const router = useRouter();
+
+  const isRedirectProvider = authMethod === "redirect";
+  const providerLabel = PROVIDER_LABELS[providerName] ?? providerName;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +43,14 @@ export default function SignInForm() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleProviderSignIn = () => {
+    setError("");
+    setIsLoading(true);
+    // Navigates away to the identity provider; the admin server route finalises
+    // the session and returns to the app, so there is nothing more to do here.
+    loginWithProvider();
   };
 
   return (
@@ -54,10 +71,30 @@ export default function SignInForm() {
               Sign In
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your username and password to sign in.
+              {isRedirectProvider
+                ? `Sign in with your ${providerLabel} account.`
+                : "Enter your username and password to sign in."}
             </p>
           </div>
           <div>
+            {isRedirectProvider ? (
+              <div>
+                {error && (
+                  <div className="mb-4 p-3 text-sm text-error-500 bg-error-50 dark:bg-error-500/10 rounded-lg">
+                    {error}
+                  </div>
+                )}
+                <Button
+                  className="w-full"
+                  size="sm"
+                  type="button"
+                  onClick={handleProviderSignIn}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Redirecting…" : `Continue with ${providerLabel}`}
+                </Button>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit}>
               {error && (
                 <div className="mb-4 p-3 text-sm text-error-500 bg-error-50 dark:bg-error-500/10 rounded-lg">
@@ -123,6 +160,7 @@ export default function SignInForm() {
                 </div>
               </div>
             </form>
+            )}
           </div>
         </div>
       </div>
