@@ -49,7 +49,3 @@ src/
 - **Styling**: Tailwind CSS v4
 - **UI**: React 19
 
-## License
-
-MIT License
-
